@@ -12,7 +12,7 @@ Rapid Automatic Keyword Extraction (RAKE) algorithm is [proposed](https://www.re
 python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps nlp-rake-eeeeeeeelias
 ```
 
-## Short usage
+## Quick usage
 ```
     from nlp_rake import rake_text
 

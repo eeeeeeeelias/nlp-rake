@@ -42,7 +42,6 @@ def split_to_tokens(text: str) -> List[str]:
     return [item for item in result if item]
 
 
-# вам может понадобиться " ".join(...)
 def split_tokens_to_phrases(tokens: List[str], stoplist: List[str] = None) -> List[str]:
     """
     Функция получает на вход список токенов tokens и список разделителей stoplist,
@@ -139,3 +138,13 @@ def get_ranked_phrases(phrases: List[str], *,
     # Sort by score than by phrase alphabetically.
     ranked_phrases.sort(key=lambda item: (-item[1], item[0]))
     return ranked_phrases
+
+
+def rake_text(text: str) -> List[Tuple[str, float]]:
+    tokens: List[str] = split_to_tokens(text)
+    phrases: List[str] = split_tokens_to_phrases(tokens, stoplist=ENGLISH_WORDS_STOPLIST)
+    cooccurrence: Dict[str, Dict[str, int]] = get_cooccurrence_graph(phrases)
+    degrees: Dict[str, int] = get_degrees(cooccurrence)
+    frequencies: Dict[str, int] = get_frequencies(cooccurrence)
+    ranked_result: List[Tuple[str, float]] = get_ranked_phrases(phrases, degrees=degrees, frequencies=frequencies)
+    return ranked_result

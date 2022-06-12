@@ -1,7 +1,7 @@
 import pytest
 
 from src.nlp_rake import get_cooccurrence_graph, get_degrees, get_frequencies, get_ranked_phrases
-from src.nlp_rake import split_to_tokens, split_tokens_to_phrases
+from src.nlp_rake import rake_text, split_to_tokens, split_tokens_to_phrases
 
 from cases_for_test import Case
 from cases_for_test import ENGLISH_WORDS_STOPLIST
@@ -58,6 +58,15 @@ def test_split_tokens_to_phrases(case: Case) -> None:
     assert len(phrases) == len(case.expected), 'Wrong number of phrases'
 
 
+@pytest.mark.parametrize('case', PHRASES_TEST_CASES, ids=lambda c: c.name)
+def test_split_tokens_to_phrases_without_specified_stoplist(case: Case) -> None:
+    tokens = split_to_tokens(case.data)
+    phrases = split_tokens_to_phrases(tokens)
+    for i, phrase in enumerate(phrases):
+        assert phrase == case.expected[i], f'Mismatch at phrase #{i}: {phrase}'
+    assert len(phrases) == len(case.expected), 'Wrong number of phrases'
+
+
 @pytest.mark.parametrize('case', COOCCURRENCE_TEST_CASES, ids=lambda c: c.name)
 def test_get_cooccurrence_graph(case: Case) -> None:
     tokens = split_to_tokens(case.data)
@@ -98,6 +107,15 @@ def test_get_ranked_phrases(case: Case) -> None:
     degrees = get_degrees(cooccurrence)
     frequencies = get_frequencies(cooccurrence)
     ranked_result = get_ranked_phrases(phrases, degrees=degrees, frequencies=frequencies)
+    for i, phrase in enumerate(ranked_result):
+        assert phrase[0] == case.expected[i][0], f'Mismatch at phrase #{i}: {phrase[0]}'
+        assert phrase[1] == case.expected[i][1], \
+            f'Wrong score {phrase[1]} at phrase #{i}: {phrase[0]}'
+    assert len(ranked_result) == len(case.expected), 'Wrong number of phrases'
+
+@pytest.mark.parametrize('case', RANKED_TEST_CASES, ids=lambda c: c.name)
+def test_rake_text(case: Case) -> None:
+    ranked_result = rake_text(case.data)
     for i, phrase in enumerate(ranked_result):
         assert phrase[0] == case.expected[i][0], f'Mismatch at phrase #{i}: {phrase[0]}'
         assert phrase[1] == case.expected[i][1], \
