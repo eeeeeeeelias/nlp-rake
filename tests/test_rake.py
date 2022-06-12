@@ -42,7 +42,8 @@ def test_split_to_tokens(case: Case) -> None:
                 ['and', ',', '.', '(', ')'],
                 ['Mary', 'John', 'some words', 'other words']
         ),
-        (['a', 'b'], [], ['a b']),
+        (['me', 'you'], None, ['me you']),
+        (['me', 'and', 'you', '.'], None, ['me', 'you']),
     ]
 )
 def test_split_tokens_to_phrases_simple(tokens, stoplist, expected) -> None:
@@ -112,6 +113,7 @@ def test_get_ranked_phrases(case: Case) -> None:
         assert phrase[1] == case.expected[i][1], \
             f'Wrong score {phrase[1]} at phrase #{i}: {phrase[0]}'
     assert len(ranked_result) == len(case.expected), 'Wrong number of phrases'
+
 
 @pytest.mark.parametrize('case', RANKED_TEST_CASES, ids=lambda c: c.name)
 def test_rake_text(case: Case) -> None:
