@@ -18,9 +18,10 @@ ENGLISH_WORDS_STOPLIST: List[str] = [
 
 def split_to_tokens(text: str) -> List[str]:
     """
-    Функция работает почти как метод str.split(), с некоторыми особенностями:
-    - пустые строки не остаются в итоговом списке
-    - знаки препинания в начале и в конце слова (все, кроме апострофа) отделяются от слова
+    Split text string to tokens.
+
+    Behavior is similar to str.split(),
+    but empty lines are omitted and punctuation marks are separated from word.
 
     Example:
     split_to_tokens('John     said "Hey!" (and some other words.)') ->
@@ -44,16 +45,15 @@ def split_to_tokens(text: str) -> List[str]:
 
 def split_tokens_to_phrases(tokens: List[str], stoplist: List[str] = None) -> List[str]:
     """
-    Функция получает на вход список токенов tokens и список разделителей stoplist,
-    а возвращает список фраз.
-    Фраза -- такой набор токенов, что
-    - фраза содержит несколько токенов (>0), идущих в списке tokens подряд
-    - фраза не содержит разделителей
-    - перед фразой стоит разделитель из stoplist или начало списка tokens
-    - после фразы стоит разделитель из stoplist или конец списка tokens
+    Merge tokens into phrases, delimited by items from stoplist.
 
-    Если простыми словами, нужно сложить слова в словосочетаниями,
-    а границами этих словосочетаний являются элементы stoplist
+    Phrase is a sequence of token that has the following properties:
+    - phrase contains 1 or more tokens
+    - tokens from phrase go in a row
+    - phrase does not contain delimiters from stoplist
+    - either the previous (not in a phrase) token belongs to stop list or it is the beginning of tokens list
+    - either the next (not in a phrase) token belongs to stop list or it is the end of tokens list
+
     Example:
     split_tokens_to_phrases(
         tokens=["Mary", "and", "John", ",", "some", "words", "(", "and", "other", "words", ")"],
@@ -62,6 +62,7 @@ def split_tokens_to_phrases(tokens: List[str], stoplist: List[str] = None) -> Li
     """
     if stoplist is None:
         stoplist = ENGLISH_WORDS_STOPLIST
+    stoplist += list(PUNCTUATION)
 
     current_phrase: List[str] = []
     all_phrases: List[str] = []
@@ -80,11 +81,19 @@ def split_tokens_to_phrases(tokens: List[str], stoplist: List[str] = None) -> Li
 
 def get_cooccurrence_graph(phrases: List[str]) -> Dict[str, Dict[str, int]]:
     """
-    Функция принимает список фраз и возвращает таблицу совместной встречаемости в виде словаря,
-    где ключом является токен, а значением -- словарём
-    (в этом внутреннем словаре ключ -- токен, а значение -- встречаемость).
+    Get graph that stores cooccurence of tokens in phrases.
 
-    Пример: смотрите тесты!
+    Matrix is stored as dict,
+    where key is token, value is dict (key is second token, value is number of cooccurrence).
+
+    Example:
+    get_occurrence_graph(["Mary", "John", "some words", "other words"]) -> {
+        'mary': {'mary': 1},
+        'john': {'john': 1},
+        'some': {'some': 1, 'words': 1},
+        'words': {'some': 1, 'words': 2, 'other': 1},
+        'other': {'other': 1, 'words': 1}
+    }
     """
     graph: Dict[str, Dict[str, int]] = {}
     for phrase in phrases:
@@ -98,20 +107,42 @@ def get_cooccurrence_graph(phrases: List[str]) -> Dict[str, Dict[str, int]]:
 
 def get_degrees(cooccurrence_graph: Dict[str, Dict[str, int]]) -> Dict[str, int]:
     """
-    Функция принимает таблицу встречаемости и для каждого токена возвращает его СТЕПЕНЬ:
-    сумму длин фраз, в которых встречается этот токен.
+    Get degrees for all tokens by cooccurrence graph.
 
-    Пример: смотрите тесты!
+    Result is stored as dict,
+    where key is token, value is degree (sum of lengths of phrases that contain the token).
+
+    Example:
+    get_degrees(
+        {
+            'mary': {'mary': 1},
+            'john': {'john': 1},
+            'some': {'some': 1, 'words': 1},
+            'words': {'some': 1, 'words': 2, 'other': 1},
+            'other': {'other': 1, 'words': 1}
+        }
+    ) -> {'mary': 1, 'john': 1, 'some': 2, 'words': 4, 'other': 2}
     """
     return {token: sum(cooccurrence_graph[token].values()) for token in cooccurrence_graph}
 
 
 def get_frequencies(cooccurrence_graph: Dict[str, Dict[str, int]]) -> Dict[str, int]:
     """
-    Функция принимает таблицу встречаемости и для каждого токена возвращает его ЧАСТОТУ:
-    количество раз, которое этот токен встречается.
+    Get frequencies for all tokens by cooccurrence graph.
 
-    Пример: смотрите тесты!
+    Result is stored as dict,
+    where key is token, value is frequency (number of times the token occurs).
+
+    Example:
+    get_frequencies(
+        {
+            'mary': {'mary': 1},
+            'john': {'john': 1},
+            'some': {'some': 1, 'words': 1},
+            'words': {'some': 1, 'words': 2, 'other': 1},
+            'other': {'other': 1, 'words': 1}
+        }
+    ) -> {'mary': 1, 'john': 1, 'some': 1, 'words': 2, 'other': 1}
     """
     return {token: cooccurrence_graph[token][token] for token in cooccurrence_graph}
 
@@ -120,11 +151,11 @@ def get_ranked_phrases(phrases: List[str], *,
                        degrees: Dict[str, int],
                        frequencies: Dict[str, int]) -> List[Tuple[str, float]]:
     """
-    Функция принимает список фраз, степени и частоты токенов.
-    Функция возвращает список кортежей, где каждый кортеж -- фраза и её score.
-    Score должен быть округлен до 2 знаков после запятой.
-    Элементы списка упорядочены по убыванию score,
-    при равенстве score -- в алфавитном порядке по фразе.
+    Get RAKE measure for every phrase.
+
+    Result is stored as list of tuples, every tuple contains of phrase and its RAKE measure.
+
+    Items are sorted non-ascending by RAKE measure, than alphabetically by phrase.
     """
     processed_phrases: Set[str] = set()
     ranked_phrases: List[Tuple[str, float]] = []
@@ -141,8 +172,15 @@ def get_ranked_phrases(phrases: List[str], *,
 
 
 def rake_text(text: str) -> List[Tuple[str, float]]:
+    """
+    Get RAKE measure for every phrase in text string.
+
+    Result is stored as list of tuples, every tuple contains of phrase and its RAKE measure.
+
+    Items are sorted non-ascending by RAKE measure, than alphabetically by phrase.
+    """
     tokens: List[str] = split_to_tokens(text)
-    phrases: List[str] = split_tokens_to_phrases(tokens, stoplist=ENGLISH_WORDS_STOPLIST)
+    phrases: List[str] = split_tokens_to_phrases(tokens)
     cooccurrence: Dict[str, Dict[str, int]] = get_cooccurrence_graph(phrases)
     degrees: Dict[str, int] = get_degrees(cooccurrence)
     frequencies: Dict[str, int] = get_frequencies(cooccurrence)
