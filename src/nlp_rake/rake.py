@@ -17,16 +17,16 @@ ENGLISH_WORDS_STOPLIST: List[str] = [
 
 
 def split_to_tokens(text: str) -> List[str]:
-    """
+    '''
     Split text string to tokens.
 
     Behavior is similar to str.split(),
     but empty lines are omitted and punctuation marks are separated from word.
 
     Example:
-    split_to_tokens('John     said "Hey!" (and some other words.)') ->
-    -> ['John', 'said', '"', 'Hey', '!', '"', '(', 'and', 'some', 'other', 'words', '.', ')']
-    """
+    split_to_tokens('John     said 'Hey!' (and some other words.)') ->
+    -> ['John', 'said', ''', 'Hey', '!', ''', '(', 'and', 'some', 'other', 'words', '.', ')']
+    '''
     result = []
     for item in text.split():
         while item[0] in PUNCTUATION:
@@ -56,9 +56,9 @@ def split_tokens_to_phrases(tokens: List[str], stoplist: List[str] = None) -> Li
 
     Example:
     split_tokens_to_phrases(
-        tokens=["Mary", "and", "John", ",", "some", "words", "(", "and", "other", "words", ")"],
-        stoplist=["and", ",", ".", "(", ")"]) ->
-    -> ["Mary", "John", "some words", "other words"]
+        tokens=['Mary', 'and', 'John', ',', 'some', 'words', '(', 'and', 'other', 'words', ')'],
+        stoplist=['and', ',', '.', '(', ')']) ->
+    -> ['Mary', 'John', 'some words', 'other words']
     """
     if stoplist is None:
         stoplist = ENGLISH_WORDS_STOPLIST
@@ -70,12 +70,12 @@ def split_tokens_to_phrases(tokens: List[str], stoplist: List[str] = None) -> Li
     for token in tokens:
         if token.lower() in stoplist_set:
             if current_phrase:
-                all_phrases.append(" ".join(current_phrase))
+                all_phrases.append(' '.join(current_phrase))
             current_phrase = []
         else:
             current_phrase.append(token)
     if current_phrase:
-        all_phrases.append(" ".join(current_phrase))
+        all_phrases.append(' '.join(current_phrase))
     return all_phrases
 
 
@@ -87,7 +87,7 @@ def get_cooccurrence_graph(phrases: List[str]) -> Dict[str, Dict[str, int]]:
     where key is token, value is dict (key is second token, value is number of cooccurrence).
 
     Example:
-    get_occurrence_graph(["Mary", "John", "some words", "other words"]) -> {
+    get_occurrence_graph(['Mary', 'John', 'some words', 'other words']) -> {
         'mary': {'mary': 1},
         'john': {'john': 1},
         'some': {'some': 1, 'words': 1},
