@@ -49,3 +49,9 @@ python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps nlp-r
     #     ...
     # ]
 ```
+
+## Other
+Check out [some exercises](https://github.com/eeeeeeeelias/nlp-rake/blob/trunk/rake_exercises.ipynb) I did for an [online computational linguistics course](https://edu.sirius.online/#/course/392).
+
+## License
+[MIT](https://choosealicense.com/licenses/mit/)
