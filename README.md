@@ -2,7 +2,7 @@
 
 ![Python >= 3.6](https://img.shields.io/badge/python->=3.6-blue)
 ![License MIT](https://img.shields.io/badge/license-MIT-green)
-![cov: 100%](https://img.shields.io/badge/codecov-98%25-brightgreen)
+![cov: 100%](https://img.shields.io/badge/codecov-100%25-brightgreen)
 
 A Python package that implements RAKE algorithm for keyword extraction.
 
